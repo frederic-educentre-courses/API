@@ -4,7 +4,7 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-		<title>reveal.js</title>
+		<title>API</title>
 
 		<link rel="stylesheet" href="dist/reset.css">
 		<link rel="stylesheet" href="dist/reveal.css">
@@ -16,11 +16,104 @@
 	<body>
 		<div class="reveal">
 			<div class="slides">
-				<section>Slide 1</section>
-				<section>Slide 2</section>
+				<section>
+					<h1>API</h1>
+				</section>
+				<section>
+					<h2>Définition de l'API</h2>
+					<ul>
+						<li>Routes/Endpoints (URLs)</li>
+						<li>Méthodes HTTP (GET, POST, PUT, DELETE)</li>
+						<li>Données au format JSON</li>
+						<li>Intéraction avec un système (base de données, services externes, etc.)</li>
+					</ul>
+				</section>
+				<section>
+					<h2>RESTful ?</h2>
+					<p>Une API est considérée comme RESTful si elle respecte les principes REST suivants :</p>
+					<ul>
+						<li>Utilisation des méthodes HTTP appropriées (GET, POST, PUT, DELETE)</li>
+						<li>Statuts de réponse HTTP significatifs (200, 201, 204, 400, 404, 500)</li>
+						<li>Utilisation d'URLs pour identifier les ressources</li>
+						<li>Format de données standard (JSON)</li>
+					</ul>
+				</section>
+				<section>
+					<h2>Requêter une API avec curl</h2>
+					<p>Exemple CRUD avec <a href="https://fakestoreapi.com">Fakestoreapi</a></p>
+					<pre><code class="bash">curl -X GET "https://fakestoreapi.com/products"</code></pre>
+					<pre><code class="bash">curl -X GET "https://fakestoreapi.com/products/1"</code></pre>
+					<pre><code class="bash">curl -X POST "https://fakestoreapi.com/products" -H "Content-Type: application/json" -d '{"title": "New Product", "price": 29.99}'</code></pre>
+					<pre><code class="bash">curl -X PUT "https://fakestoreapi.com/products/1" -H "Content-Type: application/json" -d '{"title": "Updated Product", "price": 19.99}'</code></pre>
+					<pre><code class="bash">curl -X DELETE "https://fakestoreapi.com/products/1"</code></pre>
+				</section>
+				<section>
+					<h2>Exemple d'API RESTful en PHP</h2>
+					<pre><code class="php">&lt;?php
+header("Content-Type: application/json");
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+$dsn = "mysql:host=localhost;dbname=api_db;charset=utf8mb4";
+$username = "root";
+$password = "";
+try {
+	$pdo = new PDO($dsn, $username, $password);
+	$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+	http_response_code(500);
+	echo json_encode(["error" => "Database connection failed"]);
+	exit();
+}
+if ($_SERVER['REQUEST_METHOD'] === 'GET' &amp;&amp; $_SERVER['REQUEST_URI'] === '/products') {
+	$stmt = $pdo->prepare("SELECT * FROM products");
+	$stmt->execute();
+	$products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+	$pdo = null; // Close the database connection
+	echo json_encode($products);
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST' &amp;&amp; $_SERVER['REQUEST_URI'] === '/products') {
+	$data = json_decode(file_get_contents('php://input'), true);
+	if (isset($data['name']) &amp;&amp; isset($data['price'])) {
+		$stmt = $pdo->prepare("INSERT INTO products (name, price) VALUES (:name, :price)");
+		$stmt->bindParam(':name', $data['name']);
+		$stmt->bindParam(':price', $data['price']);
+		$stmt->execute();
+		$pdo = null; // Close the database connection
+		http_response_code(201);
+		echo json_encode(["message" => "Product created"]);
+	} else {
+		http_response_code(400);
+		echo json_encode(["error" => "Invalid input"]);
+	}
+} else {
+	http_response_code(404);
+	echo json_encode(["error" => "Not found"]);
+}
+?&gt;</code></pre>
+				</section>
+				<section>
+					<h2>Headers côté serveur</h2>
+					<p>Les headers côté serveur sont des en-têtes HTTP envoyés par le serveur au client.</p>
+					<p>Exemple avec PHP</p>
+					<pre><code class="php">headers("Content-Type: application/json"); // Indique que la réponse est au format JSON
+headers("Access-Control-Allow-Origin: *"); // Permet les requêtes cross-origin
+headers("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS"); // Spécifie les méthodes HTTP autorisées
+headers("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With"); // Spécifie les en-têtes HTTP autorisés
+</code></pre>
+				</section>
+				<section>
+					<h2>Headers côté client</h2>
+					<p>Les headers côté client sont des en-têtes HTTP envoyés par le client (navigateur ou application) au serveur.</p>
+					<p>Exemple avec curl</p>
+					<pre><code class="bash">curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer your_token" -d '{"key": "value"}' "https://api.example.com/data"</code></pre>
+				</section>
 			</div>
 		</div>
-
 		<script src="dist/reveal.js"></script>
 		<script src="plugin/notes/notes.js"></script>
 		<script src="plugin/markdown/markdown.js"></script>
